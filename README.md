@@ -1,0 +1,2 @@
+# sipbot
+SipBot diskord bot
