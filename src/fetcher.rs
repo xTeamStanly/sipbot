@@ -195,7 +195,7 @@ pub fn create_embed_from_post(post: SipPost) -> Value {
 }
 
 pub async fn fetcher_main(http: Http) {
-    let mut interval = tokio::time::interval(Duration::from_secs(15 * 60 * 60)); // 15 minuta
+    let mut interval = tokio::time::interval(Duration::from_secs(15 * 60)); // 15 minuta
 
     loop {
         interval.tick().await;
