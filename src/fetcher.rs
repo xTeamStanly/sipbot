@@ -140,11 +140,11 @@ pub async fn fetch_posts(database: &mut PickleDb) -> Result<Vec<SipPost>, SipErr
     // izdvajanje novih postova
     let new_left_posts: Vec<SipPost> = left_posts
                                         .into_iter()
-                                        .filter(|left_post| !old_left_posts_links.contains(&left_post.link))
+                                        .filter(|left_post| !old_left_posts_links.contains(&left_post.link) && !old_right_posts_links.contains(&left_post.link))
                                         .collect();
     let new_right_posts: Vec<SipPost> = right_posts
                                             .into_iter()
-                                            .filter(|right_post| !old_right_posts_links.contains(&right_post.link))
+                                            .filter(|right_post| !old_right_posts_links.contains(&right_post.link) && !old_left_posts_links.contains(&right_post.link))
                                             .collect();
 
     // spajanje postova u jedan niz
