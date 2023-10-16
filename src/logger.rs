@@ -26,11 +26,11 @@ pub async fn log<T: Into<String>>(log_type: &str, raw_message: T) {
     print!("{}", message);
 
     let file = OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .append(true)
-                    .open(format!("./logs/{}.txt", locale_date))
-                    .await;
+        .create(true)
+        .write(true)
+        .append(true)
+        .open(format!("./logs/{}.txt", locale_date))
+        .await;
     if let Ok(mut writeable_file) = file {
         if let Err(err) = writeable_file.write_all(message.as_bytes()).await {
             eprintln!("[FILE] {}", err);
@@ -49,10 +49,10 @@ pub fn log_sync<T: Into<String>>(log_type: &str, raw_message: T) {
     print!("{}", message);
 
     let file = std::fs::OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .append(true)
-                    .open(format!("./logs/{}.txt", locale_date));
+        .create(true)
+        .write(true)
+        .append(true)
+        .open(format!("./logs/{}.txt", locale_date));
     if let Ok(mut writeable_file) = file {
         if let Err(err) = writeable_file.write_all(message.as_bytes()) {
             eprintln!("[FILE] {}", err);

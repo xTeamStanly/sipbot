@@ -1,7 +1,7 @@
 use std::fs;
 
 use pickledb::PickleDb;
-use serenity::model::webhook::{Webhook};
+use serenity::model::webhook::Webhook;
 
 use crate::{errors::SipError, fetcher::SipPost};
 

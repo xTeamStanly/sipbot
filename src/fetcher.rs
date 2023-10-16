@@ -5,10 +5,17 @@ use reqwest::Response;
 use scraper::{Html, Selector, ElementRef};
 use serde::{Serialize, Deserialize};
 use serde_json::{Value, json};
-use serenity::{futures::TryFutureExt, model::{webhook::Webhook, prelude::{Embed}}, http::{Http}, json::JsonMap};
-use std::time::{Duration};
+use serenity::http::Http;
+use serenity::json::JsonMap;
+use serenity::futures::TryFutureExt;
+use serenity::model::prelude::Embed;
+use serenity::model::webhook::Webhook;
 
-use crate::{errors::{SipError}, DATABASE, logger, };
+use std::time::Duration;
+
+use crate::errors::SipError;
+use crate::DATABASE;
+use crate::logger;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum SipPostType {
@@ -33,13 +40,13 @@ impl PartialEq for SipPost {
 
 // setup selectors
 lazy_static::lazy_static! {
-    static ref ALL_POSTS_SELECTOR: Selector = Selector::parse("div.news-box").map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
-    static ref POSTS_SELECTOR: Selector = Selector::parse("ul li").map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
+    static ref ALL_POSTS_SELECTOR: Selector = Selector::parse("div.news-box")   .map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
+    static ref POSTS_SELECTOR: Selector     = Selector::parse("ul li")          .map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
 
-    static ref DATE_SELECTOR: Selector = Selector::parse("p").map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
-    static ref TITLE_SELECTOR: Selector = Selector::parse("h4").map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
-    static ref CONTENT_SELECTOR: Selector = Selector::parse("p").map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
-    static ref LINK_SELECTOR: Selector = Selector::parse("a").map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
+    static ref DATE_SELECTOR: Selector      = Selector::parse("p")              .map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
+    static ref TITLE_SELECTOR: Selector     = Selector::parse("h4")             .map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
+    static ref CONTENT_SELECTOR: Selector   = Selector::parse("p")              .map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
+    static ref LINK_SELECTOR: Selector      = Selector::parse("a")              .map_err(|err| SipError::SelectorError(err.to_string())).unwrap();
 }
 
 pub fn parse_element_to_posts(node: ElementRef, post_type: SipPostType) -> Result<Vec<SipPost>, SipError> {
@@ -48,40 +55,46 @@ pub fn parse_element_to_posts(node: ElementRef, post_type: SipPostType) -> Resul
     for post_element in node.select(&POSTS_SELECTOR) {
 
         let date: String = post_element
-                            .select(&DATE_SELECTOR)
-                            .nth(0)
-                            .ok_or_else(|| SipError::PostParseError("Error parsing date".to_string()))?
-                            .text()
-                            .map(|t| t.trim().to_string())
-                            .collect();
+            .select(&DATE_SELECTOR)
+            .nth(0)
+            .ok_or_else(|| SipError::PostParseError("Error parsing date".to_string()))?
+            .text()
+            .map(|t| t.trim().to_string())
+            .collect();
 
         let title: String = post_element
-                        .select(&TITLE_SELECTOR)
-                        .nth(0)
-                        .ok_or_else(|| SipError::PostParseError("Error parsing title".to_string()))?
-                        .text()
-                        .map(|t| t.trim().to_string())
-                        .collect();
+            .select(&TITLE_SELECTOR)
+            .nth(0)
+            .ok_or_else(|| SipError::PostParseError("Error parsing title".to_string()))?
+            .text()
+            .map(|t| t.trim().to_string())
+            .collect();
 
         let content: String = post_element
-                        .select(&CONTENT_SELECTOR)
-                        .nth(1)
-                        .ok_or_else(|| SipError::PostParseError("Error parsing content".to_string()))?
-                        .text()
-                        .map(|t| t.trim().to_string())
-                        .collect();
+            .select(&CONTENT_SELECTOR)
+            .nth(1)
+            .ok_or_else(|| SipError::PostParseError("Error parsing content".to_string()))?
+            .text()
+            .map(|t| t.trim().to_string())
+            .collect();
 
         let link: String = post_element
-                        .select(&LINK_SELECTOR)
-                        .nth(0)
-                        .ok_or_else(|| SipError::PostParseError("Error parsing link".to_string()))?
-                        .value()
-                        .attr("href")
-                        .ok_or_else(|| SipError::PostParseError("Error parsing hyperlink".to_string()))?
-                        .trim()
-                        .to_string();
+            .select(&LINK_SELECTOR)
+            .nth(0)
+            .ok_or_else(|| SipError::PostParseError("Error parsing link".to_string()))?
+            .value()
+            .attr("href")
+            .ok_or_else(|| SipError::PostParseError("Error parsing hyperlink".to_string()))?
+            .trim()
+            .to_string();
 
-        posts.push(SipPost { post_type: post_type.clone(), title, content, date, link });
+        posts.push(SipPost {
+            post_type: post_type.clone(),
+            title,
+            content,
+            date,
+            link
+        });
     }
 
     return Ok(posts);
@@ -93,21 +106,20 @@ pub async fn fetch_posts(database: &mut PickleDb) -> Result<Vec<SipPost>, SipErr
     logger::log_sync("SPFCH", "READING POSTS");
     // linkovi starih postova, posto uklanjamo duplikate preko linkova
     let old_left_posts_links: HashSet<String> = database
-                                                    .get::<Vec<SipPost>>("levi_stari")
-                                                    .ok_or_else(|| SipError::StorageError("No left posts found".to_string()))?
-                                                    .into_iter()
-                                                    .map(|old_left_post| old_left_post.link)
-                                                    .collect();
+        .get::<Vec<SipPost>>("levi_stari")
+        .ok_or_else(|| SipError::StorageError("No left posts found".to_string()))?
+        .into_iter()
+        .map(|old_left_post| old_left_post.link)
+        .collect();
 
     let old_right_posts_links: HashSet<String> = database
-                                                    .get::<Vec<SipPost>>("desni_stari")
-                                                    .ok_or_else(|| SipError::StorageError("No right posts found".to_string()))?
-                                                    .into_iter()
-                                                    .map(|old_right_post| old_right_post.link)
-                                                    .collect();
+        .get::<Vec<SipPost>>("desni_stari")
+        .ok_or_else(|| SipError::StorageError("No right posts found".to_string()))?
+        .into_iter()
+        .map(|old_right_post| old_right_post.link)
+        .collect();
+
     logger::log_sync("SPFCH", "POSTS READ");
-
-
 
     // pribavljanje sa sip-a
     let response: Response = reqwest::get("https://sip.elfak.ni.ac.rs/").map_err(|err| SipError::FetchError(err.to_string())).await?;
@@ -120,13 +132,14 @@ pub async fn fetch_posts(database: &mut PickleDb) -> Result<Vec<SipPost>, SipErr
     logger::log_sync("SPFCH", "PARSE ENDED");
 
     let left_posts_element: ElementRef = document
-                                            .select(&ALL_POSTS_SELECTOR)
-                                            .nth(0)
-                                            .ok_or_else(|| SipError::PostError("Missing posts".to_string()))?;
+        .select(&ALL_POSTS_SELECTOR)
+        .nth(0)
+        .ok_or_else(|| SipError::PostError("Missing posts".to_string()))?;
+
     let right_posts_element: ElementRef = document
-                                            .select(&ALL_POSTS_SELECTOR)
-                                            .nth(1)
-                                            .ok_or_else(|| SipError::PostError("Missing posts".to_string()))?;
+        .select(&ALL_POSTS_SELECTOR)
+        .nth(1)
+        .ok_or_else(|| SipError::PostError("Missing posts".to_string()))?;
 
     // pribavljeni postovi sa sip-a
     let left_posts: Vec<SipPost> = parse_element_to_posts(left_posts_element, SipPostType::New).map_err(|err| SipError::PostParseError(err.to_string()))?;
@@ -139,13 +152,13 @@ pub async fn fetch_posts(database: &mut PickleDb) -> Result<Vec<SipPost>, SipErr
 
     // izdvajanje novih postova
     let new_left_posts: Vec<SipPost> = left_posts
-                                        .into_iter()
-                                        .filter(|left_post| !old_left_posts_links.contains(&left_post.link) && !old_right_posts_links.contains(&left_post.link))
-                                        .collect();
+        .into_iter()
+        .filter(|left_post| !old_left_posts_links.contains(&left_post.link) && !old_right_posts_links.contains(&left_post.link))
+        .collect();
     let new_right_posts: Vec<SipPost> = right_posts
-                                            .into_iter()
-                                            .filter(|right_post| !old_right_posts_links.contains(&right_post.link) && !old_left_posts_links.contains(&right_post.link))
-                                            .collect();
+        .into_iter()
+        .filter(|right_post| !old_right_posts_links.contains(&right_post.link) && !old_left_posts_links.contains(&right_post.link))
+        .collect();
 
     // spajanje postova u jedan niz
     // uklanjanje dupliciranih novih postova

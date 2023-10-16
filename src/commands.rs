@@ -8,7 +8,6 @@ use crate::DATABASE;
 use crate::errors::{DiscordError, SipError};
 use crate::logger::current_date_time;
 
-
 #[command]
 #[owners_only]
 #[aliases("sip")]

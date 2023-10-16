@@ -1,13 +1,13 @@
-use std::{collections::HashSet};
+use std::collections::HashSet;
 
 use errors::DiscordError;
 use pickledb::PickleDb;
 
 use serenity::Client;
-use serenity::http::{Http};
+use serenity::http::Http;
 use serenity::futures::TryFutureExt;
 use serenity::model::prelude::{CurrentApplicationInfo, UserId, Ready};
-use serenity::framework::{StandardFramework};
+use serenity::framework::StandardFramework;
 use serenity::framework::standard::macros::group;
 use serenity::prelude::{GatewayIntents, Context, EventHandler};
 
@@ -18,7 +18,7 @@ mod logger;
 mod commands;
 use commands::*;
 
-use dotenv;
+use dotenvy;
 
 use tokio::sync::Mutex;
 
@@ -61,7 +61,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().expect("Missing .env file");
     let token: String = std::env::var("TOKEN").expect("Missing TOKEN");
     let prefix: String = std::env::var("PREFIX").expect("Missing PREFIX");
 
@@ -89,10 +89,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let intents: GatewayIntents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::GUILD_WEBHOOKS | GatewayIntents::MESSAGE_CONTENT;
     let mut client: Client = Client::builder(&token, intents)
-                        .event_handler(Handler)
-                        .framework(framework)
-                        .map_err(|err| DiscordError::DiscordBuilderError(err.to_string()))
-                        .await?;
+        .event_handler(Handler)
+        .framework(framework)
+        .map_err(|err| DiscordError::DiscordBuilderError(err.to_string()))
+        .await?;
 
     let http_fetcher: Http = Http::new(&token);
 
