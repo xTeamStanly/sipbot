@@ -54,7 +54,19 @@ pub async fn sip(context: &Context, message: &Message, _: Args) -> CommandResult
                         .color(0x65BD36)
                         .footer(|f|
                             f
-                                .text(format!("Zahtevao {}#{} u {} dana {}", message.author.name, message.author.discriminator, current_date_time.1, current_date_time.0))
+                                .text(format!(
+                                    "Zahtevao {}{} u {} dana {}",
+                                    message.author.name,
+                                    {
+                                        if message.author.discriminator != 0 {
+                                            format!("#{}", message.author.discriminator)
+                                        } else {
+                                            "".into()
+                                        }
+                                    },
+                                    current_date_time.1,
+                                    current_date_time.0
+                                ))
                                 .icon_url(message.author.avatar_url().unwrap_or("https://i.imgur.com/dyu12dZ.png".to_string()))
                         )
                 )
@@ -81,7 +93,19 @@ pub async fn sip(context: &Context, message: &Message, _: Args) -> CommandResult
                         .color(0x65BD36)
                         .footer(|f|
                             f
-                                .text(format!("Zahtevao {}#{} u {} dana {}", message.author.name, message.author.discriminator, current_date_time.1, current_date_time.0))
+                                .text(format!(
+                                    "Zahtevao {}{} u {} dana {}",
+                                    message.author.name,
+                                    {
+                                        if message.author.discriminator != 0 {
+                                            format!("#{}", message.author.discriminator)
+                                        } else {
+                                            "".into()
+                                        }
+                                    },
+                                    current_date_time.1,
+                                    current_date_time.0
+                                ))
                                 .icon_url(message.author.avatar_url().unwrap_or("https://i.imgur.com/dyu12dZ.png".to_string()))
                         )
                 )
