@@ -48,7 +48,7 @@ impl EventHandler for Handler {
         use serenity::model::gateway::Activity;
         use serenity::model::user::OnlineStatus;
 
-        let activity = Activity::playing("https://cortex.inicijativa.software");
+        let activity = Activity::competing("INiCijativa");
         let status = OnlineStatus::Online;
 
         context.set_presence(Some(activity), status).await;
